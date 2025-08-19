@@ -5,15 +5,14 @@
 #include <vector>
 #include <algorithm>
 
-#if __cplusplus >= 201703L
+#if (__cplusplus >= 201703L || _MSVC_LANG >= 201703L)
 // Over C++17
 #include <filesystem>
 namespace fs = std::filesystem;
 #else
-// In C++14
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
+// In C++14 (Use ghc::filesystem)
+#include "filesystem.hpp"
+namespace fs = ghc::filesystem;
 #endif
 
 
@@ -91,7 +90,6 @@ namespace lcv
 
         Matrix _img;
 
-        // `std::filesystem` can be used in C++14 or higher :)
         const fs::path path = filename;
 
         // Get image file extension from file name to encode image

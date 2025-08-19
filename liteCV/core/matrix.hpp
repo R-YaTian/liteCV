@@ -7,6 +7,7 @@
 
 #include "lcvdef.hpp"
 #include "lcvtypes.hpp"
+#include "saturate.hpp"
 
 
 #define LCV_8U      (lcv::ConstMatrixType<8, 0, lcv::MatrixType::UNSIGNED_INTEGER_NUMBER>().constant.packed.value)
@@ -688,6 +689,87 @@ namespace lcv
         const Element& at(Point pt) const
         {
             return at<Element>(pt.y, pt.x);
+        }
+
+    public:
+        // 创建列范围子矩阵 (类似OpenCV的colRange)
+        Matrix colRange(int startcol, int endcol) const
+        {
+            assert(startcol >= 0 && startcol < cols);
+            assert(endcol > startcol && endcol <= cols);
+            
+            Rect roi(startcol, 0, endcol - startcol, rows);
+            return (*this)(roi);
+        }
+        
+        // 创建行范围子矩阵 (类似OpenCV的rowRange)
+        Matrix rowRange(int startrow, int endrow) const
+        {
+            assert(startrow >= 0 && startrow < rows);
+            assert(endrow > startrow && endrow <= rows);
+            
+            Rect roi(0, startrow, cols, endrow - startrow);
+            return (*this)(roi);
+        }
+
+        void convertTo(Matrix& dst, int rtype, double alpha = 1.0, double beta = 0.0) const
+        {
+            MatrixType dst_type(rtype);
+            dst.create(cols, rows, rtype);
+
+            int src_depth = depth();
+            int dst_depth = dst_type.depth();
+            int src_channels = channels();
+            int dst_channels = dst_type.channels();
+
+            // 确保通道数匹配
+            assert(src_channels == dst_channels);
+
+            for (int y = 0; y < rows; y++)
+            {
+                for (int x = 0; x < cols; x++)
+                {
+                    for (int c = 0; c < src_channels; c++)
+                    {
+                        double src_val = 0.0;
+
+                        // 从源矩阵读取值
+                        if (src_depth == LCV_8U)
+                            src_val = ptr<uchar>(y, x)[c];
+                        else if (src_depth == LCV_8S)
+                            src_val = ptr<schar>(y, x)[c];
+                        else if (src_depth == LCV_16U)
+                            src_val = ptr<ushort>(y, x)[c];
+                        else if (src_depth == LCV_16S)
+                            src_val = ptr<short>(y, x)[c];
+                        else if (src_depth == LCV_32S)
+                            src_val = ptr<int>(y, x)[c];
+                        else if (src_depth == LCV_32F)
+                            src_val = ptr<float32>(y, x)[c];
+                        else if (src_depth == LCV_64F)
+                            src_val = ptr<float64>(y, x)[c];
+
+                        // 应用缩放和偏移
+                        double converted_val = src_val * alpha + beta;
+
+                        // 写入目标矩阵，使用饱和转换
+                        if (dst_depth == LCV_8U)
+                            dst.ptr<uchar>(y, x)[c] = saturate_cast<uchar>(converted_val);
+                        else if (dst_depth == LCV_8S)
+                            dst.ptr<schar>(y, x)[c] = saturate_cast<schar>(converted_val);
+                        else if (dst_depth == LCV_16U)
+                            dst.ptr<ushort>(y, x)[c] = saturate_cast<ushort>(converted_val);
+                        else if (dst_depth == LCV_16S)
+                            dst.ptr<short>(y, x)[c] = saturate_cast<short>(converted_val);
+                        else if (dst_depth == LCV_32S)
+                            dst.ptr<int>(y, x)[c] = saturate_cast<int>(converted_val);
+                        else if (dst_depth == LCV_32F)
+                            dst.ptr<float32>(y, x)[c] = saturate_cast<float32>(converted_val);
+                        else if (dst_depth == LCV_64F)
+                            dst.ptr<float64>(y, x)[c] = saturate_cast<float64>(converted_val);
+                    }
+                }
+            }
         }
     }; // class Matrix
 

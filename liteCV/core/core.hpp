@@ -6,4 +6,5 @@
 #include "lcvtypes.hpp"
 #include "saturate.hpp"
 #include "matrix.hpp"
+#include "algo.hpp"
 #endif // LCV_CORE_HPP

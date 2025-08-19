@@ -23,7 +23,7 @@ namespace lcv
         DIB(const Matrix& mat)
         {
             int bpp, width, height;
-            bpp = mat.elemSize() * 8;
+            bpp = (int)(mat.elemSize() * 8);
             width = (mat.cols % 2) ? (mat.cols + 1) : mat.cols; // SetDIBitsToDevice requires DWORD aligned
             height = mat.rows;
 
