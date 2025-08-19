@@ -69,7 +69,7 @@ namespace lcv
             goto ret;
 
         // Copy from buffer
-        img.create(width, height, req_comp == 0 ? channels : req_comp, LCV_8U);
+        img.create(height, width, req_comp == 0 ? channels : req_comp, LCV_8U);
         memcpy(img.ptr(), data, (size_t)height * img.step_info.linestep);
         stbi_image_free(data);
 
@@ -152,7 +152,7 @@ namespace lcv
             goto ret;
 
         // Copy from buffer
-        img.create(width, height, req_comp == 0 ? channels : req_comp, LCV_8U);
+        img.create(height, width, req_comp == 0 ? channels : req_comp, LCV_8U);
         memcpy(img.ptr(), data, (size_t)height * img.step_info.linestep);
         stbi_image_free(data);
 

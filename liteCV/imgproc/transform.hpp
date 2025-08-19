@@ -27,7 +27,7 @@ namespace lcv
         // scaled width and scaled height must not be zero
         assert(scaled_width * scaled_height != 0);
 
-        Matrix output(scaled_width, scaled_height, src.type());
+        Matrix output(scaled_height, scaled_width, src.type());
 
         // Loop height
         LCV_OMP_LOOP_FOR

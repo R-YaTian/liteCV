@@ -24,7 +24,7 @@ namespace lcv
         assert(kernel.cols % 2 != 0 && kernel.rows % 2 != 0);
         assert(src.cols > kernel.cols && src.rows > kernel.rows);
 
-        Matrix output(src.cols, src.rows, src.type());
+        Matrix output(src.rows, src.cols, src.type());
 
         // Loop height
         LCV_OMP_LOOP_FOR
@@ -63,7 +63,7 @@ namespace lcv
     void boxFilter(const Matrix& src, Matrix& dst, int ddepth, Size ksize, Point anchor = Point(-1, -1), bool normalize = true, int borderType = BORDER_DEFAULT)
     {
         // Make box filter
-        lcv::Mat kernel(ksize.width, ksize.height, 1, LCV_32F);
+        lcv::Mat kernel(ksize.height, ksize.width, 1, LCV_32F);
         for (int i = 0; i < kernel.cols * kernel.rows; ++i)
             kernel.ptr<float>()[i] = normalize ? (1.f / (ksize.width * ksize.height)) : 1.f;
 

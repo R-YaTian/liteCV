@@ -15,66 +15,107 @@ namespace lcv {
 
 void fitLine(const std::vector<lcv::Point2d>& points,
              lcv::Vec4d& line,
-             int distType = DIST_L2,   // 暂时只需支持 DIST_L2
+             int distType = DIST_L2,   // Only support DIST_L2 currently
              double param = 0,
              double reps = 0.01,
              double aeps = 0.01)
 {
-    if (points.size() < 2)
-        throw std::runtime_error("fitLine: at least 2 points are required");
-
-    if (distType != DIST_L2)  // cv::DIST_L2
-        throw std::runtime_error("fitLine: only DIST_L2 is supported");
-
-    // 1. 计算均值
-    double meanX = 0.0, meanY = 0.0;
-    for (const auto& p : points) {
-        meanX += p.x;
-        meanY += p.y;
+    if (points.size() < 2) {
+        throw std::invalid_argument("At least 2 points are required for line fitting");
     }
-    meanX /= points.size();
-    meanY /= points.size();
 
-    // 2. 计算协方差矩阵
-    double Sxx = 0, Syy = 0, Sxy = 0;
-    for (const auto& p : points) {
-        double dx = p.x - meanX;
-        double dy = p.y - meanY;
-        Sxx += dx * dx;
-        Syy += dy * dy;
-        Sxy += dx * dy;
+    if (distType != DIST_L2) {
+        throw std::invalid_argument("Only DIST_L2 is currently supported");
     }
-    Sxx /= points.size();
-    Syy /= points.size();
-    Sxy /= points.size();
 
-    // 3. 求解主方向（最大特征值对应的特征向量）
-    double theta = 0.5 * atan2(2 * Sxy, Sxx - Syy);
-    double vx = cos(theta);
-    double vy = sin(theta);
+    int count = static_cast<int>(points.size());
 
-    // 4. 输出结果 [vx, vy, x0, y0]
+    double x = 0, y = 0, x2 = 0, y2 = 0, xy = 0, w = 0;
+
+    // For DIST_L2，weight is 1
+    for (int i = 0; i < count; i++) {
+        double weight = 1.0f;
+        double px = points[i].x;
+        double py = points[i].y;
+
+        x += weight * px;
+        y += weight * py;
+        x2 += weight * px * px;
+        y2 += weight * py * py;
+        xy += weight * px * py;
+        w += weight;
+    }
+
+    // Normalize
+    x /= w;
+    y /= w;
+    x2 /= w;
+    y2 /= w;
+    xy /= w;
+
+    // Calculate covariance matrix elements
+    double dx2 = x2 - x * x;
+    double dy2 = y2 - y * y;
+    double dxy = xy - x * y;
+
+    // Calculate direction vector
+    double vx, vy;
+
+    // Use eigenvalue decomposition to find the main direction
+    double trace = dx2 + dy2;
+    double det = dx2 * dy2 - dxy * dxy;
+
+    if (trace < 1e-12) {
+        // All points are at the same position
+        vx = 1.0f;
+        vy = 0.0f;
+    } else {
+        // Calculate the eigenvector corresponding to the larger eigenvalue
+        double lambda = 0.5 * (trace + sqrt(trace * trace - 4 * det));
+
+        if (fabs(dxy) > 1e-12) {
+            // General case
+            vx = static_cast<double>(dxy);
+            vy = static_cast<double>(lambda - dx2);
+        } else if (dx2 >= dy2) {
+            // dxy is close to 0, choose the direction with larger variance
+            vx = 1.0f;
+            vy = 0.0f;
+        } else {
+            vx = 0.0f;
+            vy = 1.0f;
+        }
+
+        // Normalize direction vector
+        double norm = sqrt(vx * vx + vy * vy);
+        if (norm > 1e-12f) {
+            vx /= norm;
+            vy /= norm;
+        }
+    }
+
+    // Output result: [vx, vy, x0, y0]
     line[0] = vx;
     line[1] = vy;
-    line[2] = meanX;
-    line[3] = meanY;
+    line[2] = x;  // Point on the line (centroid)
+    line[3] = y;
 }
 
 void split(const Matrix& src, std::vector<Matrix>& mv)
 {
     if (src.empty())
         throw std::runtime_error("split: source matrix is empty");
-    
+
     int channels = src.channels();
     if (channels == 1) {
         mv.resize(1);
         src.copyTo(mv[0]);
         return;
     }
-    
+
     mv.resize(channels);
-    
-    // 创建单通道矩阵 - 使用depth()构建正确的单通道类型
+
+    // Create single-channel matrices - use depth() to build correct single-channel type
     int depth = src.depth();
     int single_channel_type;
     if (depth == LCV_8U) single_channel_type = LCV_8UC1;
@@ -85,14 +126,14 @@ void split(const Matrix& src, std::vector<Matrix>& mv)
     else if (depth == LCV_32F) single_channel_type = LCV_32FC1;
     else if (depth == LCV_64F) single_channel_type = LCV_64FC1;
     else throw std::runtime_error("split: unsupported matrix depth");
-    
+
     for (int c = 0; c < channels; c++) {
-        mv[c].create(src.cols, src.rows, single_channel_type);
+        mv[c].create(src.rows, src.cols, single_channel_type);
     }
-    
-    // 分离通道数据
-    size_t elem_size = src.elemSize1(); // 单个元素的字节大小
-    
+
+    // Split channel data
+    size_t elem_size = src.elemSize1(); // Size of each element in bytes
+
     for (int y = 0; y < src.rows; y++) {
         const uchar* src_ptr = src.ptr(y);
         for (int x = 0; x < src.cols; x++) {
@@ -105,38 +146,35 @@ void split(const Matrix& src, std::vector<Matrix>& mv)
     }
 }
 
-void minMaxIdx(const Matrix& src, double* minVal, double* maxVal = nullptr, 
-               Point* minLoc = nullptr, Point* maxLoc = nullptr, 
+void minMaxIdx(const Matrix& src, double* minVal, double* maxVal = nullptr,
+               Point* minLoc = nullptr, Point* maxLoc = nullptr,
                const Matrix& mask = Matrix())
 {
     if (src.empty())
         throw std::runtime_error("minMaxIdx: source matrix is empty");
-    
+
     if (src.channels() != 1)
         throw std::runtime_error("minMaxIdx: source matrix must be single channel");
-    
-    if (!mask.empty() && (mask.rows != src.rows || mask.cols != src.cols))
-        throw std::runtime_error("minMaxIdx: mask size must match source matrix size");
-    
+
     double min_val = DBL_MAX;
     double max_val = -DBL_MAX;
     Point min_loc(-1, -1);
     Point max_loc(-1, -1);
-    
+
     bool has_valid_pixel = false;
     int depth = src.depth();
-    
+
     for (int y = 0; y < src.rows; y++) {
         for (int x = 0; x < src.cols; x++) {
-            // 检查mask
+            // Check mask
             if (!mask.empty()) {
                 uchar mask_val = mask.at<uchar>(y, x);
                 if (mask_val == 0) continue;
             }
-            
+
             double val = 0.0;
-            
-            // 根据深度读取像素值
+
+            // Read pixel value based on depth
             if (depth == LCV_8U)
                 val = src.at<uchar>(y, x);
             else if (depth == LCV_8S)
@@ -145,6 +183,8 @@ void minMaxIdx(const Matrix& src, double* minVal, double* maxVal = nullptr,
                 val = src.at<ushort>(y, x);
             else if (depth == LCV_16S)
                 val = src.at<short>(y, x);
+            else if (depth == LCV_32U)
+                val = src.at<uint>(y, x);
             else if (depth == LCV_32S)
                 val = src.at<int>(y, x);
             else if (depth == LCV_32F)
@@ -153,7 +193,7 @@ void minMaxIdx(const Matrix& src, double* minVal, double* maxVal = nullptr,
                 val = src.at<double>(y, x);
             else
                 throw std::runtime_error("minMaxIdx: unsupported matrix depth");
-            
+
             if (!has_valid_pixel) {
                 min_val = max_val = val;
                 min_loc = max_loc = Point(x, y);
@@ -170,10 +210,10 @@ void minMaxIdx(const Matrix& src, double* minVal, double* maxVal = nullptr,
             }
         }
     }
-    
+
     if (!has_valid_pixel)
         throw std::runtime_error("minMaxIdx: no valid pixels found");
-    
+
     if (minVal) *minVal = min_val;
     if (maxVal) *maxVal = max_val;
     if (minLoc) *minLoc = min_loc;

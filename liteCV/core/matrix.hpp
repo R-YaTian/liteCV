@@ -158,8 +158,8 @@ namespace lcv
                 _channels = std::stoi(match[3]);
                 _ntype = find_ntype(_bits, match[2].str()[0]);
 
-                assert(_bits > 0 && !(_bits & (_bits - 1)));	
-                assert(_channels > 0);	
+                assert(_bits > 0 && !(_bits & (_bits - 1)));
+                assert(_channels > 0);
                 assert(_ntype != INVALID_NUMBER);
 
                 channels = _channels;
@@ -170,16 +170,16 @@ namespace lcv
 
         union
         {
-            int value;
+            short int value;
             struct
             {
                 int bits : 8;
                 int channels : 4;
-                int ntype : 2;
+                int ntype : 3;
             } fields;
         } packed;
 
-        MatrixType(int value = 0)
+        MatrixType(short int value = 0)
             : packed({ value }) {}
 
         MatrixType(int bits, int channels, int ntype)
@@ -290,13 +290,13 @@ namespace lcv
         uchar* datalimit;
 
     private:
-        std::atomic<unsigned long>* refcount;
+        std::atomic<unsigned long long>* refcount;
 
     private:
         void incref()
         {
             if (refcount == nullptr)
-                refcount = new std::atomic<unsigned long>(0l);
+                refcount = new std::atomic<unsigned long long>(0l);
             ++(*refcount);
         }
 
@@ -326,7 +326,7 @@ namespace lcv
 
         void inline deep_copy(const Matrix& another)
         {
-            create(another.cols, another.rows, another.type_info);
+            create(another.rows, another.cols, another.type_info);
 
             if (!another.isSubmatrix())
             {
@@ -398,28 +398,29 @@ namespace lcv
             swallow_copy(another, roi, false);
         }
 
-        explicit Matrix(int cols, int rows, int type)
+        explicit Matrix(int rows, int cols, int type)
         {
             init();
-            create(cols, rows, type);
+            create(rows, cols, type);
         }
 
-        Matrix(int cols, int rows, const std::string& channel_string)
+        explicit Matrix(int rows, int cols, int type, int init_value)
         {
             init();
-            create(cols, rows, channel_string);
+            create(rows, cols, type);
+            memset(ptr(), init_value, rows * step_info.linestep);
         }
 
-        explicit Matrix(int cols, int rows, int channels, int type_wo_channels)
+        Matrix(int rows, int cols, const std::string& channel_string)
         {
             init();
-            create(cols, rows, channels, type_wo_channels);
+            create(rows, cols, channel_string);
         }
 
-        Matrix(int cols, int rows, int channels, const std::string& dtype)
+        Matrix(int rows, int cols, int channels, const std::string& dtype)
         {
             init();
-            create(cols, rows, channels, dtype);
+            create(rows, cols, channels, dtype);
         }
 
     public:
@@ -448,7 +449,7 @@ namespace lcv
 
     private:
         // ONLY USES FOR CREATE MATRIX IN THE CLASS
-        void create(int cols, int rows, const MatrixType& type_info)
+        void create(int rows, int cols, const MatrixType& type_info)
         {
             // Calculate size
             int pixel_bytes = (int)type_info.bbp() / 8;
@@ -476,59 +477,52 @@ namespace lcv
         }
 
     public:
-        static Matrix zeros(int cols, int rows, int type)
+        static Matrix zeros(int rows, int cols, int type)
         {
-            Matrix m(cols, rows, type);
+            Matrix m(rows, cols, type);
             memset(m.ptr(), 0, m.rows * m.step_info.linestep);
             return m;
         }
 
-        static Matrix zeros(int cols, int rows, const std::string& channel_string)
+        static Matrix zeros(int rows, int cols, const std::string& channel_string)
         {
-            Matrix m(cols, rows, channel_string);
+            Matrix m(rows, cols, channel_string);
             memset(m.ptr(), 0, m.rows * m.step_info.linestep);
             return m;
         }
 
-        static Matrix zeros(int cols, int rows, int channels, int type_wo_channels)
+        static Matrix zeros(int rows, int cols, int channels, const std::string& dtype)
         {
-            Matrix m(cols, rows, channels, type_wo_channels);
-            memset(m.ptr(), 0, m.rows * m.step_info.linestep);
-            return m;
-        }
-
-        static Matrix zeros(int cols, int rows, int channels, const std::string& dtype)
-        {
-            Matrix m(cols, rows, channels, dtype);
+            Matrix m(rows, cols, channels, dtype);
             memset(m.ptr(), 0, m.rows * m.step_info.linestep);
             return m;
         }
 
     public:
-        void create(int cols, int rows, int type)
+        void create(int rows, int cols, int type)
         {
             // Create matrix by type
-            create(cols, rows, MatrixType(type));
+            create(rows, cols, MatrixType(type));
         }
 
-        void create(int cols, int rows, const std::string& channel_string)
+        void create(int rows, int cols, const std::string& channel_string)
         {
             // Create matrix by channel string
-            create(cols, rows, MatrixType(channel_string));
+            create(rows, cols, MatrixType(channel_string));
         }
 
-        void create(int cols, int rows, int channels, int type_wo_channels)
+        void create(int rows, int cols, int channels, int type_wo_channels)
         {
             // Create matrix by type with channels
             MatrixType mt(type_wo_channels);
             mt.packed.fields.channels = channels;
-            create(cols, rows, mt);
+            create(rows, cols, mt);
         }
 
-        void create(int cols, int rows, int channels, const std::string& dtype)
+        void create(int rows, int cols, int channels, const std::string& dtype)
         {
             // Create matrix by dtype
-            create(cols, rows, MatrixType(channels, dtype));
+            create(rows, cols, MatrixType(channels, dtype));
         }
 
         template<typename Element>
@@ -692,37 +686,36 @@ namespace lcv
         }
 
     public:
-        // 创建列范围子矩阵 (类似OpenCV的colRange)
+        // Create column range submatrix (similar to OpenCV's colRange)
         Matrix colRange(int startcol, int endcol) const
         {
             assert(startcol >= 0 && startcol < cols);
             assert(endcol > startcol && endcol <= cols);
-            
+
             Rect roi(startcol, 0, endcol - startcol, rows);
             return (*this)(roi);
         }
-        
-        // 创建行范围子矩阵 (类似OpenCV的rowRange)
+
+        // Create row range submatrix (similar to OpenCV's rowRange)
         Matrix rowRange(int startrow, int endrow) const
         {
             assert(startrow >= 0 && startrow < rows);
             assert(endrow > startrow && endrow <= rows);
-            
+
             Rect roi(0, startrow, cols, endrow - startrow);
             return (*this)(roi);
         }
 
-        void convertTo(Matrix& dst, int rtype, double alpha = 1.0, double beta = 0.0) const
+        void convertTo(Matrix& dst, const MatrixType& type_info, double alpha = 1.0, double beta = 0.0) const
         {
-            MatrixType dst_type(rtype);
-            dst.create(cols, rows, rtype);
+            dst.create(rows, cols, type_info);
 
             int src_depth = depth();
-            int dst_depth = dst_type.depth();
+            int dst_depth = type_info.depth();
             int src_channels = channels();
-            int dst_channels = dst_type.channels();
+            int dst_channels = type_info.channels();
 
-            // 确保通道数匹配
+            // Ensure channel count matches
             assert(src_channels == dst_channels);
 
             for (int y = 0; y < rows; y++)
@@ -733,7 +726,7 @@ namespace lcv
                     {
                         double src_val = 0.0;
 
-                        // 从源矩阵读取值
+                        // Read value from source matrix
                         if (src_depth == LCV_8U)
                             src_val = ptr<uchar>(y, x)[c];
                         else if (src_depth == LCV_8S)
@@ -742,6 +735,8 @@ namespace lcv
                             src_val = ptr<ushort>(y, x)[c];
                         else if (src_depth == LCV_16S)
                             src_val = ptr<short>(y, x)[c];
+                        else if (src_depth == LCV_32U)
+                            src_val = ptr<uint>(y, x)[c];
                         else if (src_depth == LCV_32S)
                             src_val = ptr<int>(y, x)[c];
                         else if (src_depth == LCV_32F)
@@ -749,10 +744,10 @@ namespace lcv
                         else if (src_depth == LCV_64F)
                             src_val = ptr<float64>(y, x)[c];
 
-                        // 应用缩放和偏移
+                        // Apply scale and offset
                         double converted_val = src_val * alpha + beta;
 
-                        // 写入目标矩阵，使用饱和转换
+                        // Write to destination matrix, using saturate cast
                         if (dst_depth == LCV_8U)
                             dst.ptr<uchar>(y, x)[c] = saturate_cast<uchar>(converted_val);
                         else if (dst_depth == LCV_8S)
@@ -761,6 +756,8 @@ namespace lcv
                             dst.ptr<ushort>(y, x)[c] = saturate_cast<ushort>(converted_val);
                         else if (dst_depth == LCV_16S)
                             dst.ptr<short>(y, x)[c] = saturate_cast<short>(converted_val);
+                        else if (dst_depth == LCV_32U)
+                            dst.ptr<uint>(y, x)[c] = saturate_cast<uint>(converted_val);
                         else if (dst_depth == LCV_32S)
                             dst.ptr<int>(y, x)[c] = saturate_cast<int>(converted_val);
                         else if (dst_depth == LCV_32F)

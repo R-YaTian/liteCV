@@ -28,7 +28,7 @@ namespace lcv
     void cvtColor_BGR2RGB(const Matrix& src, Matrix& dst)
     {
         assert(src.type() == LCV_8UC3);
-        Matrix dst_image(src.cols, src.rows, LCV_8UC3);
+        Matrix dst_image(src.rows, src.cols, LCV_8UC3);
 
         LCV_OMP_LOOP_FOR
         for (int y = 0;y < src.rows;++y)
@@ -50,7 +50,7 @@ namespace lcv
     void cvtColor_BGR2BGRA(const Matrix& src, Matrix& dst)
     {
         assert(src.type() == LCV_8UC3);
-        Matrix dst_image(src.cols, src.rows, LCV_8UC4);
+        Matrix dst_image(src.rows, src.cols, LCV_8UC4);
 
         LCV_OMP_LOOP_FOR
         for (int y = 0; y < src.rows; ++y)
@@ -73,7 +73,7 @@ namespace lcv
     void cvtColor_BGR2GRAY(const Matrix& src, Matrix& dst)
     {
         assert(src.type() == LCV_8UC3);
-        Matrix dst_image(src.cols, src.rows, LCV_8UC1);
+        Matrix dst_image(src.rows, src.cols, LCV_8UC1);
 
         LCV_OMP_LOOP_FOR
         for (int y = 0; y < src.rows; ++y)
@@ -97,7 +97,7 @@ namespace lcv
     void cvtColor_BGRA2RGBA(const Matrix& src, Matrix& dst)
     {
         assert(src.type() == LCV_8UC4);
-        Matrix dst_image(src.cols, src.rows, LCV_8UC4);
+        Matrix dst_image(src.rows, src.cols, LCV_8UC4);
 
         LCV_OMP_LOOP_FOR
         for (int y = 0; y < src.rows; ++y)
@@ -120,7 +120,7 @@ namespace lcv
     void cvtColor_BGRA2BGR(const Matrix& src, Matrix& dst)
     {
         assert(src.type() == LCV_8UC4);
-        Matrix dst_image(src.cols, src.rows, LCV_8UC3);
+        Matrix dst_image(src.rows, src.cols, LCV_8UC3);
 
         LCV_OMP_LOOP_FOR
         for (int y = 0; y < src.rows; ++y)
@@ -142,7 +142,7 @@ namespace lcv
     void cvtColor_BGRA2GRAY(const Matrix& src, Matrix& dst)
     {
         assert(src.type() == LCV_8UC4);
-        Matrix dst_image(src.cols, src.rows, LCV_8UC1);
+        Matrix dst_image(src.rows, src.cols, LCV_8UC1);
 
         LCV_OMP_LOOP_FOR
         for (int y = 0; y < src.rows; ++y)
@@ -166,7 +166,7 @@ namespace lcv
     void cvtColor_GRAY2BGR(const Matrix& src, Matrix& dst)
     {
         assert(src.type() == LCV_8UC1);
-        Matrix dst_image(src.cols, src.rows, LCV_8UC3);
+        Matrix dst_image(src.rows, src.cols, LCV_8UC3);
 
         LCV_OMP_LOOP_FOR
         for (int y = 0; y < src.rows; ++y)
@@ -188,7 +188,7 @@ namespace lcv
     void cvtColor_GRAY2BGRA(const Matrix& src, Matrix& dst)
     {
         assert(src.type() == LCV_8UC1);
-        Matrix dst_image(src.cols, src.rows, LCV_8UC4);
+        Matrix dst_image(src.rows, src.cols, LCV_8UC4);
 
         LCV_OMP_LOOP_FOR
         for (int y = 0; y < src.rows; ++y)
