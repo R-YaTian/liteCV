@@ -16,9 +16,9 @@ namespace lcv {
 void fitLine(const std::vector<lcv::Point2d>& points,
              lcv::Vec4d& line,
              int distType = DIST_L2,   // Only support DIST_L2 currently
-             double param = 0,
-             double reps = 0.01,
-             double aeps = 0.01)
+             double param = 0.0f,
+             double reps = 0.01f,
+             double aeps = 0.01f)
 {
     if (points.size() < 2) {
         throw std::invalid_argument("At least 2 points are required for line fitting");
@@ -109,7 +109,7 @@ void split(const Matrix& src, std::vector<Matrix>& mv)
     int channels = src.channels();
     if (channels == 1) {
         mv.resize(1);
-        src.copyTo(mv[0]);
+        mv[0] = src.clone();
         return;
     }
 
@@ -172,7 +172,7 @@ void minMaxIdx(const Matrix& src, double* minVal, double* maxVal = nullptr,
                 if (mask_val == 0) continue;
             }
 
-            double val = 0.0;
+            double val = 0.0f;
 
             // Read pixel value based on depth
             if (depth == LCV_8U)

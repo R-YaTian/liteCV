@@ -343,6 +343,23 @@ namespace lcv
             }
         }
 
+        void inline data_copy(const Matrix& another)
+        {
+            if (!another.isSubmatrix())
+            {
+                // Just copying data fully
+                memcpy(data, another.data, step_info.linestep * rows);
+            }
+            else
+            {
+                // Copying data line by line
+                for (int y = 0; y < another.rows; ++y)
+                {
+                    memcpy(ptr(y), another.ptr(y), step_info.linestep);
+                }
+            }
+        }
+
         void inline swallow_copy(const Matrix& another, bool must_be_released)
         {
             if (must_be_released)
@@ -536,17 +553,15 @@ namespace lcv
                 ptr<Element>()[i] = value;
         }
 
-        void copyTo(Matrix& matrix) const
+        void copyTo(Matrix matrix) const
         {
-            Matrix m;
-            m.deep_copy(*this);
-            matrix = m;
+            matrix.data_copy(*this);
         }
 
         Matrix clone() const
         {
             Matrix m;
-            copyTo(m);
+            m.deep_copy(*this);
             return m;
         }
 
@@ -686,27 +701,23 @@ namespace lcv
         }
 
     public:
-        // Create column range submatrix (similar to OpenCV's colRange)
-        Matrix colRange(int startcol, int endcol) const
-        {
-            assert(startcol >= 0 && startcol < cols);
-            assert(endcol > startcol && endcol <= cols);
-
-            Rect roi(startcol, 0, endcol - startcol, rows);
-            return (*this)(roi);
-        }
-
-        // Create row range submatrix (similar to OpenCV's rowRange)
+        // OpenCV-compatible rowRange: [startrow, endrow), share data (no copy)
         Matrix rowRange(int startrow, int endrow) const
         {
-            assert(startrow >= 0 && startrow < rows);
-            assert(endrow > startrow && endrow <= rows);
-
+            assert(0 <= startrow && startrow <= endrow && endrow <= rows);
             Rect roi(0, startrow, cols, endrow - startrow);
             return (*this)(roi);
         }
 
-        void convertTo(Matrix& dst, const MatrixType& type_info, double alpha = 1.0, double beta = 0.0) const
+        // OpenCV-compatible colRange: [startcol, endcol), share data (no copy)
+        Matrix colRange(int startcol, int endcol) const
+        {
+            assert(0 <= startcol && startcol <= endcol && endcol <= cols);
+            Rect roi(startcol, 0, endcol - startcol, rows);
+            return (*this)(roi);
+        }
+
+        void convertTo(Matrix& dst, const MatrixType& type_info, double alpha = 1.0f, double beta = 0.0f) const
         {
             dst.create(rows, cols, type_info);
 
@@ -724,7 +735,7 @@ namespace lcv
                 {
                     for (int c = 0; c < src_channels; c++)
                     {
-                        double src_val = 0.0;
+                        double src_val = 0.0f;
 
                         // Read value from source matrix
                         if (src_depth == LCV_8U)

@@ -29,8 +29,7 @@ namespace lcv
 
             create(bpp, width, height);
 
-            Matrix m;
-            mat.copyTo(m);
+            Matrix m = mat.clone();
 
             if (width != mat.cols)
             {

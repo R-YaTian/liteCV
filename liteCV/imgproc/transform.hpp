@@ -11,13 +11,13 @@
 
 namespace lcv
 {
-    void resize(const Matrix& src, Matrix& dst, Size dsize, double fx = 0, double fy = 0, int interpolation = INTER_LINEAR)
+    void resize(const Matrix& src, Matrix& dst, Size dsize, double fx = 1.0f, double fy = 1.0f, int interpolation = INTER_LINEAR)
     {
         // Only support 8-bits depth image
         assert(src.depth() == LCV_8U);
 
         // both dsize and fx|fy cannot be zero
-        assert(dsize.area() == 0 && (fx == 0 || fy == 0));
+        assert(dsize.area() != 0 && fx != 0 && fy != 0);
 
         const int width = src.cols;
         const int height = src.rows;
