@@ -51,6 +51,46 @@
 #define LCV_64FC3   (lcv::ConstMatrixType<64, 3, lcv::MatrixType::REAL_NUMBER>().constant.packed.value)
 #define LCV_64FC4   (lcv::ConstMatrixType<64, 4, lcv::MatrixType::REAL_NUMBER>().constant.packed.value)
 
+#define CV_8U     LCV_8U
+#define CV_8UC1   LCV_8UC1
+#define CV_8UC2   LCV_8UC2
+#define CV_8UC3   LCV_8UC3
+#define CV_8UC4   LCV_8UC4
+#define CV_8S     LCV_8S
+#define CV_8SC1   LCV_8SC1
+#define CV_8SC2   LCV_8SC2
+#define CV_8SC3   LCV_8SC3
+#define CV_8SC4   LCV_8SC4
+#define CV_16U    LCV_16U
+#define CV_16UC1  LCV_16UC1
+#define CV_16UC2  LCV_16UC2
+#define CV_16UC3  LCV_16UC3
+#define CV_16UC4  LCV_16UC4
+#define CV_16S    LCV_16S
+#define CV_16SC1  LCV_16SC1
+#define CV_16SC2  LCV_16SC2
+#define CV_16SC3  LCV_16SC3
+#define CV_16SC4  LCV_16SC4
+#define CV_32U    LCV_32U
+#define CV_32UC1  LCV_32UC1
+#define CV_32UC2  LCV_32UC2
+#define CV_32UC3  LCV_32UC3
+#define CV_32UC4  LCV_32UC4
+#define CV_32S    LCV_32S
+#define CV_32SC1  LCV_32SC1
+#define CV_32SC2  LCV_32SC2
+#define CV_32SC3  LCV_32SC3
+#define CV_32SC4  LCV_32SC4
+#define CV_32F    LCV_32F
+#define CV_32FC1  LCV_32FC1
+#define CV_32FC2  LCV_32FC2
+#define CV_32FC3  LCV_32FC3
+#define CV_32FC4  LCV_32FC4
+#define CV_64F    LCV_64F
+#define CV_64FC1  LCV_64FC1
+#define CV_64FC2  LCV_64FC2
+#define CV_64FC3  LCV_64FC3
+#define CV_64FC4  LCV_64FC4
 
 namespace lcv
 {
@@ -421,17 +461,24 @@ namespace lcv
             create(rows, cols, type);
         }
 
-        explicit Matrix(int rows, int cols, int type, int init_value)
+        explicit Matrix(int rows, int cols, int type, const Scalar& s)
         {
+            // We only support scalar initialization with a single value
             init();
             create(rows, cols, type);
-            memset(ptr(), init_value, rows * step_info.linestep);
+            memset(ptr(), s[0], rows * step_info.linestep);
         }
 
         Matrix(int rows, int cols, const std::string& channel_string)
         {
             init();
             create(rows, cols, channel_string);
+        }
+
+        explicit Matrix(int cols, int rows, int channels, int type_wo_channels)
+        {
+            init();
+            create(cols, rows, channels, type_wo_channels);
         }
 
         Matrix(int rows, int cols, int channels, const std::string& dtype)
@@ -466,8 +513,13 @@ namespace lcv
 
     private:
         // ONLY USES FOR CREATE MATRIX IN THE CLASS
-        void create(int rows, int cols, const MatrixType& type_info)
+        void create(int rows, int cols, const MatrixType& _type_info)
         {
+            // Check type info, avoid channel 0
+            MatrixType type_info = _type_info;
+            if (type_info.packed.fields.channels == 0)
+                type_info.packed.fields.channels = 1;
+
             // Calculate size
             int pixel_bytes = (int)type_info.bbp() / 8;
             int scanline_bytes = cols * pixel_bytes;
@@ -504,6 +556,13 @@ namespace lcv
         static Matrix zeros(int rows, int cols, const std::string& channel_string)
         {
             Matrix m(rows, cols, channel_string);
+            memset(m.ptr(), 0, m.rows * m.step_info.linestep);
+            return m;
+        }
+
+        static Matrix zeros(int cols, int rows, int channels, int type_wo_channels)
+        {
+            Matrix m(cols, rows, channels, type_wo_channels);
             memset(m.ptr(), 0, m.rows * m.step_info.linestep);
             return m;
         }
@@ -719,7 +778,7 @@ namespace lcv
 
         void convertTo(Matrix& dst, const MatrixType& type_info, double alpha = 1.0f, double beta = 0.0f) const
         {
-            dst.create(rows, cols, type_info);
+            Matrix output(rows, cols, type_info.packed.value);
 
             int src_depth = depth();
             int dst_depth = type_info.depth();
@@ -729,6 +788,7 @@ namespace lcv
             // Ensure channel count matches
             assert(src_channels == dst_channels);
 
+            LCV_OMP_LOOP_FOR
             for (int y = 0; y < rows; y++)
             {
                 for (int x = 0; x < cols; x++)
@@ -760,24 +820,26 @@ namespace lcv
 
                         // Write to destination matrix, using saturate cast
                         if (dst_depth == LCV_8U)
-                            dst.ptr<uchar>(y, x)[c] = saturate_cast<uchar>(converted_val);
+                            output.ptr<uchar>(y, x)[c] = saturate_cast<uchar>(converted_val);
                         else if (dst_depth == LCV_8S)
-                            dst.ptr<schar>(y, x)[c] = saturate_cast<schar>(converted_val);
+                            output.ptr<schar>(y, x)[c] = saturate_cast<schar>(converted_val);
                         else if (dst_depth == LCV_16U)
-                            dst.ptr<ushort>(y, x)[c] = saturate_cast<ushort>(converted_val);
+                            output.ptr<ushort>(y, x)[c] = saturate_cast<ushort>(converted_val);
                         else if (dst_depth == LCV_16S)
-                            dst.ptr<short>(y, x)[c] = saturate_cast<short>(converted_val);
+                            output.ptr<short>(y, x)[c] = saturate_cast<short>(converted_val);
                         else if (dst_depth == LCV_32U)
-                            dst.ptr<uint>(y, x)[c] = saturate_cast<uint>(converted_val);
+                            output.ptr<uint>(y, x)[c] = saturate_cast<uint>(converted_val);
                         else if (dst_depth == LCV_32S)
-                            dst.ptr<int>(y, x)[c] = saturate_cast<int>(converted_val);
+                            output.ptr<int>(y, x)[c] = saturate_cast<int>(converted_val);
                         else if (dst_depth == LCV_32F)
-                            dst.ptr<float32>(y, x)[c] = saturate_cast<float32>(converted_val);
+                            output.ptr<float32>(y, x)[c] = saturate_cast<float32>(converted_val);
                         else if (dst_depth == LCV_64F)
-                            dst.ptr<float64>(y, x)[c] = saturate_cast<float64>(converted_val);
+                            output.ptr<float64>(y, x)[c] = saturate_cast<float64>(converted_val);
                     }
                 }
             }
+
+            dst = output;
         }
     }; // class Matrix
 

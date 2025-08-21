@@ -122,6 +122,7 @@ void split(const Matrix& src, std::vector<Matrix>& mv)
     else if (depth == LCV_8S) single_channel_type = LCV_8SC1;
     else if (depth == LCV_16U) single_channel_type = LCV_16UC1;
     else if (depth == LCV_16S) single_channel_type = LCV_16SC1;
+    else if (depth == LCV_32U) single_channel_type = LCV_32UC1;
     else if (depth == LCV_32S) single_channel_type = LCV_32SC1;
     else if (depth == LCV_32F) single_channel_type = LCV_32FC1;
     else if (depth == LCV_64F) single_channel_type = LCV_64FC1;
@@ -134,16 +135,28 @@ void split(const Matrix& src, std::vector<Matrix>& mv)
     // Split channel data
     size_t elem_size = src.elemSize1(); // Size of each element in bytes
 
-    for (int y = 0; y < src.rows; y++) {
+    LCV_OMP_LOOP_FOR
+    for (int y = 0; y < src.rows; y++)
+    {
         const uchar* src_ptr = src.ptr(y);
-        for (int x = 0; x < src.cols; x++) {
-            for (int c = 0; c < channels; c++) {
+        for (int x = 0; x < src.cols; x++)
+        {
+            for (int c = 0; c < channels; c++)
+            {
                 uchar* dst_ptr = mv[c].ptr(y, x);
                 const uchar* src_elem = src_ptr + x * src.elemSize() + c * elem_size;
                 memcpy(dst_ptr, src_elem, elem_size);
             }
         }
     }
+}
+
+void split(const Matrix& src, Matrix* mvbegin)
+{
+    std::vector<Matrix> mv;
+    split(src, mv);
+    for (int i = 0; i < src.channels(); i++)
+        mvbegin[i] = mv[i];
 }
 
 void minMaxIdx(const Matrix& src, double* minVal, double* maxVal = nullptr,
@@ -164,8 +177,11 @@ void minMaxIdx(const Matrix& src, double* minVal, double* maxVal = nullptr,
     bool has_valid_pixel = false;
     int depth = src.depth();
 
-    for (int y = 0; y < src.rows; y++) {
-        for (int x = 0; x < src.cols; x++) {
+    LCV_OMP_LOOP_FOR
+    for (int y = 0; y < src.rows; y++)
+    {
+        for (int x = 0; x < src.cols; x++)
+        {
             // Check mask
             if (!mask.empty()) {
                 uchar mask_val = mask.at<uchar>(y, x);
@@ -218,6 +234,55 @@ void minMaxIdx(const Matrix& src, double* minVal, double* maxVal = nullptr,
     if (maxVal) *maxVal = max_val;
     if (minLoc) *minLoc = min_loc;
     if (maxLoc) *maxLoc = max_loc;
+}
+
+Matrix RGB2YCbCr(Matrix in) {
+    in.convertTo(in, LCV_32FC3);
+    int h = in.rows;
+    int w = in.cols;
+
+    Matrix ycbcr(h, w, LCV_8UC3);
+    float32 R, G, B;
+    float64 f = pow(2, 16);
+
+    LCV_OMP_LOOP_FOR
+    for (int i = 0;i < h;i++)
+    {
+        for (int j = 0;j < w;j++)
+        {
+            Vec3f pixel = in.at<Vec3f>(i, j);
+            R = pixel[2];
+            G = pixel[1];
+            B = pixel[0];
+
+            Vec3b color;
+            color[0] = round((0.2568 * R + 0.5041 * G + 0.0979 * B + 16) * f) / f;
+            color[1] = round((-0.1482 * R - 0.2910 * G + 0.4392 * B + 128) * f) / f;
+            color[2] = round((0.4392 * R - 0.3678 * G - 0.0714 * B + 128) * f) / f;
+
+            if (color[0] < 16)
+                color[0] = 16;
+
+            if (color[0] > 235)
+                color[0] = 235;
+
+            if (color[1] < 16)
+                color[1] = 16;
+
+            if (color[1] > 240)
+                color[1] = 240;
+
+            if (color[2] < 16)
+                color[2] = 16;
+
+            if (color[2] > 240)
+                color[2] = 240;
+
+            ycbcr.at<Vec3b>(i, j) = color;
+        }
+    }
+
+    return ycbcr;
 }
 
 } // namespace lcv

@@ -26,118 +26,132 @@ namespace lcv
     /* ///////////////////////////////////////
     *  //    Element_
     */ //
-	template<typename Type, int N>
-	class Element_
-	{
-	private:
-		Type __Data[N];
+    template<typename Type, int N>
+    class Element_
+    {
+    private:
+        Type __Data[N];
 
-	public:
-		Element_()
-		{
-			memset(__Data, 0, sizeof(Type) * N);
-		}
+    public:
+        Element_()
+        {
+            memset(__Data, 0, sizeof(Type) * N);
+        }
 
-		Element_(Type a0, Type a1)
-		{
-			assert(N == 2);
-			__Data[0] = a0;
-			__Data[1] = a1;
-		}
+        // For cv::Scalar(_Tp v0)
+        Element_(Type a0)
+        {
+            assert(N == 4);
 
-		Element_(Type a0, Type a1, Type a2)
-		{
-			assert(N == 3);
-			__Data[0] = a0;
-			__Data[1] = a1;
-			__Data[2] = a2;
-		}
+            __Data[0] = a0;
+            for (int i = 1; i < N; ++i)
+                __Data[i] = Type();
+        }
 
-		Element_(Type a0, Type a1, Type a2, Type a3)
-		{
-			assert(N == 4);
-			__Data[0] = a0;
-			__Data[1] = a1;
-			__Data[2] = a2;
-			__Data[3] = a3;
-		}
+        Element_(Type a0, Type a1)
+        {
+            assert(N == 2);
+            __Data[0] = a0;
+            __Data[1] = a1;
+        }
 
-		Element_(Type a0, Type a1, Type a2, Type a3, Type a4)
-		{
-			assert(N == 5);
-			__Data[0] = a0;
-			__Data[1] = a1;
-			__Data[2] = a2;
-			__Data[3] = a3;
-			__Data[4] = a4;
-		}
+        Element_(Type a0, Type a1, Type a2)
+        {
+            assert(N == 3);
+            __Data[0] = a0;
+            __Data[1] = a1;
+            __Data[2] = a2;
+        }
 
-		Element_(Type a0, Type a1, Type a2, Type a3, Type a4, Type a5)
-		{
-			assert(N == 6);
-			__Data[0] = a0;
-			__Data[1] = a1;
-			__Data[2] = a2;
-			__Data[3] = a3;
-			__Data[4] = a4;
-			__Data[5] = a5;
-		}
+        Element_(Type a0, Type a1, Type a2, Type a3)
+        {
+            assert(N == 4);
+            __Data[0] = a0;
+            __Data[1] = a1;
+            __Data[2] = a2;
+            __Data[3] = a3;
+        }
 
-	public:
-		Type& operator[](int i)
-		{
-			return __Data[i];
-		}
+        Element_(Type a0, Type a1, Type a2, Type a3, Type a4)
+        {
+            assert(N == 5);
+            __Data[0] = a0;
+            __Data[1] = a1;
+            __Data[2] = a2;
+            __Data[3] = a3;
+            __Data[4] = a4;
+        }
 
-		const Type& operator[](int i) const
-		{
-			return __Data[i];
-		}
-	}; // class Element_
+        Element_(Type a0, Type a1, Type a2, Type a3, Type a4, Type a5)
+        {
+            assert(N == 6);
+            __Data[0] = a0;
+            __Data[1] = a1;
+            __Data[2] = a2;
+            __Data[3] = a3;
+            __Data[4] = a4;
+            __Data[5] = a5;
+        }
+
+    public:
+        Type& operator[](int i)
+        {
+            return __Data[i];
+        }
+
+        const Type& operator[](int i) const
+        {
+            return __Data[i];
+        }
+    }; // class Element_
 
     // Elements by type and channel
-	using Element2b = Element_<uchar, 2>;
-	using Element3b = Element_<uchar, 3>;
-	using Element4b = Element_<uchar, 4>;
-	using Element2s = Element_<short, 2>;
-	using Element3s = Element_<short, 3>;
-	using Element4s = Element_<short, 4>;
-	using Element2w = Element_<ushort, 2>;
-	using Element3w = Element_<ushort, 3>;
-	using Element4w = Element_<ushort, 4>;
-	using Element2i = Element_<int, 2>;
-	using Element3i = Element_<int, 3>;
-	using Element4i = Element_<int, 4>;
-	using Element2f = Element_<float32, 2>;
-	using Element3f = Element_<float32, 3>;
-	using Element4f = Element_<float32, 4>;
-	using Element2d = Element_<float64, 2>;
-	using Element3d = Element_<float64, 3>;
-	using Element4d = Element_<float64, 4>;
+    using Element2b = Element_<uchar, 2>;
+    using Element3b = Element_<uchar, 3>;
+    using Element4b = Element_<uchar, 4>;
+    using Element2s = Element_<short, 2>;
+    using Element3s = Element_<short, 3>;
+    using Element4s = Element_<short, 4>;
+    using Element2w = Element_<ushort, 2>;
+    using Element3w = Element_<ushort, 3>;
+    using Element4w = Element_<ushort, 4>;
+    using Element2i = Element_<int, 2>;
+    using Element3i = Element_<int, 3>;
+    using Element4i = Element_<int, 4>;
+    using Element2f = Element_<float32, 2>;
+    using Element3f = Element_<float32, 3>;
+    using Element4f = Element_<float32, 4>;
+    using Element2d = Element_<float64, 2>;
+    using Element3d = Element_<float64, 3>;
+    using Element4d = Element_<float64, 4>;
 
-	// cv::Vec
-	template<typename Type, int N>
-	using Vec = Element_<Type, N>;
+    // cv::Vec
+    template<typename Type, int N>
+    using Vec = Element_<Type, N>;
 
-	using Vec2b = Vec<uchar, 2>;
-	using Vec3b = Vec<uchar, 3>;
-	using Vec4b = Vec<uchar, 4>;
-	using Vec2s = Vec<short, 2>;
-	using Vec3s = Vec<short, 3>;
-	using Vec4s = Vec<short, 4>;
-	using Vec2w = Vec<ushort, 2>;
-	using Vec3w = Vec<ushort, 3>;
-	using Vec4w = Vec<ushort, 4>;
-	using Vec2i = Vec<int, 2>;
-	using Vec3i = Vec<int, 3>;
-	using Vec4i = Vec<int, 4>;
-	using Vec2f = Vec<float32, 2>;
-	using Vec3f = Vec<float32, 3>;
-	using Vec4f = Vec<float32, 4>;
-	using Vec2d = Vec<float64, 2>;
-	using Vec3d = Vec<float64, 3>;
-	using Vec4d = Vec<float64, 4>;
+    using Vec2b = Vec<uchar, 2>;
+    using Vec3b = Vec<uchar, 3>;
+    using Vec4b = Vec<uchar, 4>;
+    using Vec2s = Vec<short, 2>;
+    using Vec3s = Vec<short, 3>;
+    using Vec4s = Vec<short, 4>;
+    using Vec2w = Vec<ushort, 2>;
+    using Vec3w = Vec<ushort, 3>;
+    using Vec4w = Vec<ushort, 4>;
+    using Vec2i = Vec<int, 2>;
+    using Vec3i = Vec<int, 3>;
+    using Vec4i = Vec<int, 4>;
+    using Vec2f = Vec<float32, 2>;
+    using Vec3f = Vec<float32, 3>;
+    using Vec4f = Vec<float32, 4>;
+    using Vec2d = Vec<float64, 2>;
+    using Vec3d = Vec<float64, 3>;
+    using Vec4d = Vec<float64, 4>;
 
+    // cv::Scalar
+    template<typename Type>
+    using Scalar_ = Element_<Type, 4>;
+    using Scalar = Scalar_<float64>;
     /* ///////////////////////////////////////
     *  //    Point_, Point3_
     */ //
@@ -338,5 +352,6 @@ namespace lcv
     using Rect2f = Rect_<float32>;
     using Rect2d = Rect_<float64>;
     using Rect = Rect2i;
+    using String = std::string;
 }; //namespace lcv
 #endif // LCV_CORE_TYPES_HPP
