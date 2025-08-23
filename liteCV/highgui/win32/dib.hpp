@@ -22,14 +22,18 @@ namespace lcv
     private:
         DIB(const Matrix& mat)
         {
+            Matrix m;
+            if (mat.channels() == 1 && (mat.depth() != CV_8S || mat.depth() != CV_8U))
+                mat.convertTo(m, mat.type_info.has_sign() ? CV_8SC1 : CV_8UC1);
+            else
+                m = mat.clone();
+
             int bpp, width, height;
-            bpp = (int)(mat.elemSize() * 8);
-            width = (mat.cols % 2) ? (mat.cols + 1) : mat.cols; // SetDIBitsToDevice requires DWORD aligned
-            height = mat.rows;
+            bpp = (int)(m.elemSize() * 8);
+            width = (m.cols % 2) ? (m.cols + 1) : m.cols; // SetDIBitsToDevice requires DWORD aligned
+            height = m.rows;
 
             create(bpp, width, height);
-
-            Matrix m = mat.clone();
 
             if (width != mat.cols)
             {
@@ -47,7 +51,7 @@ namespace lcv
                 memcpy(pdata, m.data, width * height * ((int)bpp / 8));
             }
         }
-        
+
     public:
         DIB()
             : pbmi(NULL), pdata(NULL)

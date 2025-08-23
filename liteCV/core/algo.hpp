@@ -135,7 +135,6 @@ void split(const Matrix& src, std::vector<Matrix>& mv)
     // Split channel data
     size_t elem_size = src.elemSize1(); // Size of each element in bytes
 
-    LCV_OMP_LOOP_FOR
     for (int y = 0; y < src.rows; y++)
     {
         const uchar* src_ptr = src.ptr(y);

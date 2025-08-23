@@ -466,7 +466,24 @@ namespace lcv
             // We only support scalar initialization with a single value
             init();
             create(rows, cols, type);
-            memset(ptr(), s[0], rows * step_info.linestep);
+
+            int dst_depth = depth();
+            if (dst_depth == LCV_8U)
+                setTo(saturate_cast<uchar>(s[0]));
+            else if (dst_depth == LCV_8S)
+                setTo(saturate_cast<schar>(s[0]));
+            else if (dst_depth == LCV_16U)
+                setTo(saturate_cast<ushort>(s[0]));
+            else if (dst_depth == LCV_16S)
+                setTo(saturate_cast<short>(s[0]));
+            else if (dst_depth == LCV_32U)
+                setTo(saturate_cast<uint>(s[0]));
+            else if (dst_depth == LCV_32S)
+                setTo(saturate_cast<int>(s[0]));
+            else if (dst_depth == LCV_32F)
+                setTo(saturate_cast<float32>(s[0]));
+            else if (dst_depth == LCV_64F)
+                setTo(saturate_cast<float64>(s[0]));
         }
 
         Matrix(int rows, int cols, const std::string& channel_string)

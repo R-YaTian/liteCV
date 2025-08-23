@@ -491,7 +491,27 @@ static int stbiw__outfile(stbi__write_context *s, int rgb_dir, int vdir, int x, 
 
 static int stbi_write_bmp_core(stbi__write_context *s, int x, int y, int comp, const void *data)
 {
-   if (comp != 4) {
+   if (comp == 1) {
+      // write 8-bit grayscale bitmap with palette
+      int pad = (-x) & 3;
+      int i;
+      // First write the header with palette info
+      stbiw__writef(s, "11 4 22 4" "4 44 22 444444",
+              'B', 'M', 14+40+1024+(x+pad)*y, 0,0, 14+40+1024,  // file header (1024 = 256*4 palette size)
+               40, x,y, 1,8, 0,0,0,0,0,0);                    // bitmap header with 8bpp and 256 colors
+
+      // Write grayscale palette (256 entries, each 4 bytes: B,G,R,reserved)
+      for (i = 0; i < 256; i++) {
+         stbiw__write1(s, i);  // Blue
+         stbiw__write1(s, i);  // Green  
+         stbiw__write1(s, i);  // Red
+         stbiw__write1(s, 0);  // Reserved
+      }
+
+      // Write pixel data
+      stbiw__write_pixels(s,-1,-1,x,y,comp,(void*)data,0,pad,0);
+      return 1;
+   } else if (comp == 3) {
       // write RGB bitmap
       int pad = (-x*3) & 3;
       return stbiw__outfile(s,-1,-1,x,y,comp,1,(void *) data,0,pad,

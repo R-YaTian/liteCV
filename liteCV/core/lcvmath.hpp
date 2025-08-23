@@ -1,6 +1,8 @@
 #pragma once
 #ifndef LCV_CORE_LCVMATH_HPP
 #define LCV_CORE_LCVMATH_HPP
+#include <cmath>
+
 #include "lcvdef.hpp"
 
 
@@ -13,9 +15,9 @@ namespace lcv
     } // lcvModulo
 
     template<typename Float>
-    int inline lcvRound(Float v)
+    double inline lcvRound(Float v)
     {
-        return (int)(v + ((Float)0.5));
+        return round(v);
     } // lcvRound
 
     template<typename Float>

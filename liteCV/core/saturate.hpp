@@ -102,13 +102,13 @@ namespace lcv
     template<>
     uchar inline saturate_cast<uchar>(float32 v)
     {
-        return saturate_cast<uchar>(lcvRound(v));
+        return saturate_cast<uchar>((uchar)lcvRound(v));
     }
 
     template<>
     uchar inline saturate_cast<uchar>(float64 v)
     {
-        return saturate_cast<uchar>(lcvRound(v));
+        return saturate_cast<uchar>((uchar)lcvRound(v));
     }
 
     template<>
@@ -144,13 +144,13 @@ namespace lcv
     template<>
     schar inline saturate_cast<schar>(float32 v)
     {
-        return saturate_cast<schar>(lcvRound(v));
+        return saturate_cast<schar>((schar)lcvRound(v));
     }
 
     template<>
     schar inline saturate_cast<schar>(float64 v)
     {
-        return saturate_cast<schar>(lcvRound(v));
+        return saturate_cast<schar>((schar)lcvRound(v));
     }
 
     template<>
@@ -180,13 +180,13 @@ namespace lcv
     template<>
     ushort inline saturate_cast<ushort>(float32 v)
     {
-        return saturate_cast<ushort>(lcvRound(v));
+        return saturate_cast<ushort>((ushort)lcvRound(v));
     }
 
     template<>
     ushort inline saturate_cast<ushort>(float64 v)
     {
-        return saturate_cast<ushort>(lcvRound(v));
+        return saturate_cast<ushort>((ushort)lcvRound(v));
     }
 
     template<>
@@ -210,13 +210,13 @@ namespace lcv
     template<>
     short inline saturate_cast<short>(float32 v)
     {
-        return saturate_cast<short>(lcvRound(v));
+        return saturate_cast<short>((short)lcvRound(v));
     }
 
     template<>
     short inline saturate_cast<short>(float64 v)
     {
-        return saturate_cast<short>(lcvRound(v));
+        return saturate_cast<short>((short)lcvRound(v));
     }
 
     template<>
@@ -258,13 +258,13 @@ namespace lcv
     template<>
     int inline saturate_cast<int>(float32 v)
     {
-        return lcvRound(v);
+        return (int)lcvRound(v);
     }
 
     template<>
     int inline saturate_cast<int>(float64 v)
     {
-        return lcvRound(v);
+        return (int)lcvRound(v);
     }
 } // namespace lcv
 #endif // LCV_CORE_SATURATE_HPP

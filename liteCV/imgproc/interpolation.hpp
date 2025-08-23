@@ -25,8 +25,8 @@ namespace lcv
     public:
         double interpolate(const Matrix& src, int dwidth, int dheight, int dx, int dy, int ch) final
         {
-            const int sx = lcvRound(((float)dx / dwidth) * src.cols);
-            const int sy = lcvRound(((float)dy / dheight) * src.rows);
+            const int sx = (int)lcvRound(((float)dx / dwidth) * src.cols);
+            const int sy = (int)lcvRound(((float)dy / dheight) * src.rows);
             return (double)src.ptr<uchar>(sy, sx)[ch];
         }
     }; // class NearestInterpolationPolicy

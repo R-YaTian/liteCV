@@ -101,6 +101,13 @@ namespace lcv
             cvtColor(img, _img, COLOR_RGB2BGR);
         else if (img.channels() == 4)
             cvtColor(img, _img, COLOR_BGRA2RGBA);
+        else if (img.channels() == 1)
+        {
+            if (img.depth() != CV_8S || img.depth() != CV_8U)
+                img.convertTo(_img, img.type_info.has_sign() ? CV_8SC1 : CV_8UC1);
+            else
+                _img = img.clone();
+        }
 
         // Write image to file to use proper image encoder by the extension
         // `params` is not used yet :(
