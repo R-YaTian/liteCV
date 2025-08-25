@@ -9,18 +9,6 @@
 
 namespace lcv
 {
-    template<typename RType, typename IType, typename UType>
-    RType clip(IType v, UType M)
-    {
-        return (RType)std::min((UType)v, (UType)M);
-    }
-
-    template<typename RType, typename IType, typename UType>
-    RType clip(IType v, UType M, UType m)
-    {
-        return (RType)std::max(std::min((UType)v, (UType)M), (UType)m);
-    }
-
     template<typename T>
     T inline saturate_cast(uchar v)
     {
@@ -69,202 +57,304 @@ namespace lcv
         return T(v);
     }
 
+    template<typename T>
+    T inline saturate_cast(int64 v)
+    {
+        return T(v);
+    }
+
+    template<typename T>
+    T inline saturate_cast(uint64 v)
+    {
+        return T(v);
+    }
+
     template<>
     uchar inline saturate_cast<uchar>(schar v)
     {
-        return clip<uchar, schar, int>(v, UINT8_MAX, 0);
+        return (uchar)std::max((int)v, 0);
     }
 
     template<>
     uchar inline saturate_cast<uchar>(ushort v)
     {
-        return clip<uchar, ushort, uint>(v, UINT8_MAX);
-    }
-
-    template<>
-    uchar inline saturate_cast<uchar>(short v)
-    {
-        return clip<uchar, short, int>(v, UINT8_MAX, 0);
-    }
-
-    template<>
-    uchar inline saturate_cast<uchar>(uint v)
-    {
-        return clip<uchar, uint, uint>(v, UINT8_MAX);
+        return (uchar)std::min((uint)v, (uint)UCHAR_MAX);
     }
 
     template<>
     uchar inline saturate_cast<uchar>(int v)
     {
-        return clip<uchar, int, int>(v, UINT8_MAX, 0);
+        return (uchar)((uint)v <= UCHAR_MAX ? v : v > 0 ? UCHAR_MAX : 0);
+    }
+
+    template<>
+    uchar inline saturate_cast<uchar>(short v)
+    {
+        return saturate_cast<uchar>((int)v);
+    }
+
+    template<>
+    uchar inline saturate_cast<uchar>(uint v)
+    {
+        return (uchar)std::min(v, (uint)UCHAR_MAX);
     }
 
     template<>
     uchar inline saturate_cast<uchar>(float32 v)
     {
-        return saturate_cast<uchar>((uchar)lcvRound(v));
+        int iv = lcvRound(v);
+        return saturate_cast<uchar>(iv);
     }
 
     template<>
     uchar inline saturate_cast<uchar>(float64 v)
     {
-        return saturate_cast<uchar>((uchar)lcvRound(v));
+        int iv = lcvRound(v);
+        return saturate_cast<uchar>(iv);
+    }
+
+    template<>
+    uchar inline saturate_cast<uchar>(int64 v)
+    {
+        return (uchar)((uint64)v <= (uint64)UCHAR_MAX ? v : v > 0 ? UCHAR_MAX : 0);
+    }
+
+    template<>
+    uchar inline saturate_cast<uchar>(uint64 v)
+    {
+        return (uchar)std::min(v, (uint64)UCHAR_MAX);
     }
 
     template<>
     schar inline saturate_cast<schar>(uchar v)
     {
-        return clip<schar, uchar, uint>(v, INT8_MAX);
+        return (schar)std::min((int)v, SCHAR_MAX);
     }
 
     template<>
     schar inline saturate_cast<schar>(ushort v)
     {
-        return clip<schar, ushort, uint>(v, INT8_MAX);
-    }
-
-    template<>
-    schar inline saturate_cast<schar>(short v)
-    {
-        return clip<schar, short, int>(v, INT8_MAX, INT8_MIN);
-    }
-
-    template<>
-    schar inline saturate_cast<schar>(uint v)
-    {
-        return clip<schar, uint, uint>(v, INT8_MAX);
+        return (schar)std::min((uint)v, (uint)SCHAR_MAX);
     }
 
     template<>
     schar inline saturate_cast<schar>(int v)
     {
-        return clip<schar, int, int>(v, INT8_MAX, INT8_MIN);
+        return (schar)((uint)(v-SCHAR_MIN) <= (uint)UCHAR_MAX ? v : v > 0 ? SCHAR_MAX : SCHAR_MIN);
+    }
+
+    template<>
+    schar inline saturate_cast<schar>(short v)
+    {
+        return saturate_cast<schar>((int)v);
+    }
+
+    template<>
+    schar inline saturate_cast<schar>(uint v)
+    {
+        return (schar)std::min(v, (uint)SCHAR_MAX);
     }
 
     template<>
     schar inline saturate_cast<schar>(float32 v)
     {
-        return saturate_cast<schar>((schar)lcvRound(v));
+        int iv = lcvRound(v);
+        return saturate_cast<schar>(iv);
     }
 
     template<>
     schar inline saturate_cast<schar>(float64 v)
     {
-        return saturate_cast<schar>((schar)lcvRound(v));
+        int iv = lcvRound(v);
+        return saturate_cast<schar>(iv);
+    }
+
+    template<>
+    schar inline saturate_cast<schar>(int64 v)
+    {
+        return (schar)((uint64)((int64)v-SCHAR_MIN) <= (uint64)UCHAR_MAX ? v : v > 0 ? SCHAR_MAX : SCHAR_MIN);
+    }
+
+    template<>
+    schar inline saturate_cast<schar>(uint64 v)
+    {
+        return (schar)std::min(v, (uint64)SCHAR_MAX);
     }
 
     template<>
     ushort inline saturate_cast<ushort>(schar v)
     {
-        return clip<ushort, schar, int>(v, UINT16_MAX, 0);
+        return (ushort)std::max((int)v, 0);
     }
 
     template<>
     ushort inline saturate_cast<ushort>(short v)
     {
-        return clip<ushort, short, int>(v, UINT16_MAX, 0);
+        return (ushort)std::max((int)v, 0);
     }
 
     template<>
     ushort inline saturate_cast<ushort>(uint v)
     {
-        return clip<ushort, uint, uint>(v, UINT16_MAX);
+        return (ushort)std::min(v, (uint)USHRT_MAX);
     }
 
     template<>
     ushort inline saturate_cast<ushort>(int v)
     {
-        return clip<ushort, int, int>(v, UINT16_MAX, 0);
+        return (ushort)((uint)v <= (uint)USHRT_MAX ? v : v > 0 ? USHRT_MAX : 0);
     }
 
     template<>
     ushort inline saturate_cast<ushort>(float32 v)
     {
-        return saturate_cast<ushort>((ushort)lcvRound(v));
+        int iv = lcvRound(v);
+        return saturate_cast<ushort>(iv);
     }
 
     template<>
     ushort inline saturate_cast<ushort>(float64 v)
     {
-        return saturate_cast<ushort>((ushort)lcvRound(v));
+        int iv = lcvRound(v);
+        return saturate_cast<ushort>(iv);
+    }
+
+    template<>
+    ushort inline saturate_cast<ushort>(int64 v)
+    {
+        return (ushort)((uint64)v <= (uint64)USHRT_MAX ? v : v > 0 ? USHRT_MAX : 0);
+    }
+
+    template<>
+    ushort inline saturate_cast<ushort>(uint64 v)
+    {
+        return (ushort)std::min(v, (uint64)USHRT_MAX);
     }
 
     template<>
     short inline saturate_cast<short>(ushort v)
     {
-        return clip<short, ushort, uint>(v, INT16_MAX);
+        return (short)std::min((int)v, SHRT_MAX);
     }
 
     template<>
     short inline saturate_cast<short>(uint v)
     {
-        return clip<short, uint, uint>(v, INT16_MAX);
+        return (short)std::min(v, (uint)SHRT_MAX);
     }
 
     template<>
     short inline saturate_cast<short>(int v)
     {
-        return clip<short, int, int>(v, INT16_MAX, INT16_MIN);
+        return (short)((uint)(v - SHRT_MIN) <= (uint)USHRT_MAX ? v : v > 0 ? SHRT_MAX : SHRT_MIN);
     }
 
     template<>
     short inline saturate_cast<short>(float32 v)
     {
-        return saturate_cast<short>((short)lcvRound(v));
+        int iv = lcvRound(v);
+        return saturate_cast<short>(iv);
     }
 
     template<>
     short inline saturate_cast<short>(float64 v)
     {
-        return saturate_cast<short>((short)lcvRound(v));
+        int iv = lcvRound(v);
+        return saturate_cast<short>(iv);
+    }
+
+    template<>
+    short inline saturate_cast<short>(int64 v)
+    {
+        return (short)((uint64)((int64)v - SHRT_MIN) <= (uint64)USHRT_MAX ? v : v > 0 ? SHRT_MAX : SHRT_MIN);
+    }
+
+    template<>
+    short inline saturate_cast<short>(uint64 v)
+    {
+        return (short)std::min(v, (uint64)SHRT_MAX);
     }
 
     template<>
     uint inline saturate_cast<uint>(schar v)
     {
-        return (uint)clip<uint, schar, schar>(v, INT8_MAX, 0);
+        return (uint)std::max(v, (schar)0);
     }
 
     template<>
     uint inline saturate_cast<uint>(short v)
     {
-        return (uint)clip<uint, short, short>(v, INT16_MAX, 0);
+        return (uint)std::max(v, (short)0);
     }
 
     template<>
     uint inline saturate_cast<uint>(int v)
     {
-        return (uint)clip<uint, int, int>(v, INT32_MAX, 0);
+        return (uint)std::max(v, (int)0);
     }
 
     template<>
     uint inline saturate_cast<uint>(float32 v)
     {
-        return (uint)lcvRound(v);
+        return static_cast<uint>(lcvRound(v));
     }
 
     template<>
     uint inline saturate_cast<uint>(float64 v)
     {
-        return (uint)lcvRound(v);
+        return static_cast<uint>(lcvRound(v));
+    }
+
+    template<>
+    uint inline saturate_cast<uint>(int64 v)
+    {
+        return (uint)((uint64)v <= (uint64)UINT_MAX ? v : v > 0 ? UINT_MAX : 0);
+    }
+
+    template<>
+    uint inline saturate_cast<uint>(uint64 v)
+    {
+        return (uint)std::min(v, (uint64)UINT_MAX);
     }
 
     template<>
     int inline saturate_cast<int>(uint v)
     {
-        return clip<int, uint, uint>(v, INT32_MAX);
+        return (int)std::min(v, (uint)INT_MAX);
     }
 
     template<>
     int inline saturate_cast<int>(float32 v)
     {
-        return (int)lcvRound(v);
+        return lcvRound(v);
     }
 
     template<>
     int inline saturate_cast<int>(float64 v)
     {
-        return (int)lcvRound(v);
+        return lcvRound(v);
     }
+
+    template<>
+    int inline saturate_cast<int>(int64 v)
+    {
+        return (int)((uint64)(v - INT_MIN) <= (uint64)UINT_MAX ? v : v > 0 ? INT_MAX : INT_MIN);
+    }
+
+    template<>
+    int inline saturate_cast<int>(uint64 v)
+    {
+        return (int)std::min(v, (uint64)INT_MAX);
+    }
+
+    template<> inline uint64 saturate_cast<uint64>(schar v)      { return (uint64)std::max(v, (schar)0); }
+
+    template<> inline uint64 saturate_cast<uint64>(short v)      { return (uint64)std::max(v, (short)0); }
+
+    template<> inline uint64 saturate_cast<uint64>(int v)        { return (uint64)std::max(v, (int)0); }
+
+    template<> inline uint64 saturate_cast<uint64>(int64 v)      { return (uint64)std::max(v, (int64)0); }
+
+    template<> inline int64 saturate_cast<int64>(uint64 v)       { return (int64)std::min(v, (uint64)LLONG_MAX); }
 } // namespace lcv
 #endif // LCV_CORE_SATURATE_HPP

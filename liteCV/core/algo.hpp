@@ -8,13 +8,15 @@
 
 #include "lcvdef.hpp"
 #include "lcvtypes.hpp"
+#include "lcvmath.hpp"
 
 #define DIST_L2 2
+#define CV_DIST_L2 DIST_L2
 
 namespace lcv {
 
-void fitLine(const std::vector<lcv::Point2d>& points,
-             lcv::Vec4d& line,
+void fitLine(const std::vector<Point2d>& points,
+             Vec4d& line,
              int distType = DIST_L2,   // Only support DIST_L2 currently
              double param = 0.0f,
              double reps = 0.01f,
@@ -31,74 +33,36 @@ void fitLine(const std::vector<lcv::Point2d>& points,
     int count = static_cast<int>(points.size());
 
     double x = 0, y = 0, x2 = 0, y2 = 0, xy = 0, w = 0;
+    double dx2, dy2, dxy;
+    int i;
+    float t;
 
-    // For DIST_L2，weight is 1
-    for (int i = 0; i < count; i++) {
-        double weight = 1.0f;
-        double px = points[i].x;
-        double py = points[i].y;
-
-        x += weight * px;
-        y += weight * py;
-        x2 += weight * px * px;
-        y2 += weight * py * py;
-        xy += weight * px * py;
-        w += weight;
+    // Calculating the average of x and y...
+    for( i = 0; i < count; i += 1 )
+    {
+        x += points[i].x;
+        y += points[i].y;
+        x2 += points[i].x * points[i].x;
+        y2 += points[i].y * points[i].y;
+        xy += points[i].x * points[i].y;
     }
+    w = (float) count;
 
-    // Normalize
     x /= w;
     y /= w;
     x2 /= w;
     y2 /= w;
     xy /= w;
 
-    // Calculate covariance matrix elements
-    double dx2 = x2 - x * x;
-    double dy2 = y2 - y * y;
-    double dxy = xy - x * y;
+    dx2 = x2 - x * x;
+    dy2 = y2 - y * y;
+    dxy = xy - x * y;
 
-    // Calculate direction vector
-    double vx, vy;
-
-    // Use eigenvalue decomposition to find the main direction
-    double trace = dx2 + dy2;
-    double det = dx2 * dy2 - dxy * dxy;
-
-    if (trace < 1e-12) {
-        // All points are at the same position
-        vx = 1.0f;
-        vy = 0.0f;
-    } else {
-        // Calculate the eigenvector corresponding to the larger eigenvalue
-        double lambda = 0.5 * (trace + sqrt(trace * trace - 4 * det));
-
-        if (fabs(dxy) > 1e-12) {
-            // General case
-            vx = static_cast<double>(dxy);
-            vy = static_cast<double>(lambda - dx2);
-        } else if (dx2 >= dy2) {
-            // dxy is close to 0, choose the direction with larger variance
-            vx = 1.0f;
-            vy = 0.0f;
-        } else {
-            vx = 0.0f;
-            vy = 1.0f;
-        }
-
-        // Normalize direction vector
-        double norm = sqrt(vx * vx + vy * vy);
-        if (norm > 1e-12f) {
-            vx /= norm;
-            vy /= norm;
-        }
-    }
-
-    // Output result: [vx, vy, x0, y0]
-    line[0] = vx;
-    line[1] = vy;
-    line[2] = x;  // Point on the line (centroid)
-    line[3] = y;
+    t = (float) atan2( 2 * dxy, dx2 - dy2 ) / 2;
+    line[0] = (float) cos( t );
+    line[1] = (float) sin( t );
+    line[2] = (float) x;
+    line[3] = (float) y;
 }
 
 void split(const Matrix& src, std::vector<Matrix>& mv)
@@ -176,7 +140,6 @@ void minMaxIdx(const Matrix& src, double* minVal, double* maxVal = nullptr,
     bool has_valid_pixel = false;
     int depth = src.depth();
 
-    LCV_OMP_LOOP_FOR
     for (int y = 0; y < src.rows; y++)
     {
         for (int x = 0; x < src.cols; x++)
@@ -244,7 +207,6 @@ Matrix RGB2YCbCr(Matrix in) {
     float32 R, G, B;
     float64 f = pow(2, 16);
 
-    LCV_OMP_LOOP_FOR
     for (int i = 0;i < h;i++)
     {
         for (int j = 0;j < w;j++)
@@ -255,27 +217,9 @@ Matrix RGB2YCbCr(Matrix in) {
             B = pixel[0];
 
             Vec3b color;
-            color[0] = round((0.2568 * R + 0.5041 * G + 0.0979 * B + 16) * f) / f;
-            color[1] = round((-0.1482 * R - 0.2910 * G + 0.4392 * B + 128) * f) / f;
-            color[2] = round((0.4392 * R - 0.3678 * G - 0.0714 * B + 128) * f) / f;
-
-            if (color[0] < 16)
-                color[0] = 16;
-
-            if (color[0] > 235)
-                color[0] = 235;
-
-            if (color[1] < 16)
-                color[1] = 16;
-
-            if (color[1] > 240)
-                color[1] = 240;
-
-            if (color[2] < 16)
-                color[2] = 16;
-
-            if (color[2] > 240)
-                color[2] = 240;
+            color[0] = lcvClamp<uchar>(round((0.2568 * R + 0.5041 * G + 0.0979 * B + 16) * f) / f, 16, 235);
+            color[1] = lcvClamp<uchar>(round((-0.1482 * R - 0.2910 * G + 0.4392 * B + 128) * f) / f, 16, 240);
+            color[2] = lcvClamp<uchar>(round((0.4392 * R - 0.3678 * G - 0.0714 * B + 128) * f) / f, 16, 240);
 
             ycbcr.at<Vec3b>(i, j) = color;
         }

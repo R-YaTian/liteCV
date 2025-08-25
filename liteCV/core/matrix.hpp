@@ -805,7 +805,6 @@ namespace lcv
             // Ensure channel count matches
             assert(src_channels == dst_channels);
 
-            LCV_OMP_LOOP_FOR
             for (int y = 0; y < rows; y++)
             {
                 for (int x = 0; x < cols; x++)

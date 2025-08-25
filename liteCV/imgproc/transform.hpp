@@ -21,8 +21,8 @@ namespace lcv
 
         const int width = src.cols;
         const int height = src.rows;
-        int scaled_width = dsize.width ? dsize.width : (int)lcvRound(width * fx);
-        int scaled_height = dsize.height ? dsize.height : (int)lcvRound(height * fy);
+        int scaled_width = dsize.width ? dsize.width : lcvRound(width * fx);
+        int scaled_height = dsize.height ? dsize.height : lcvRound(height * fy);
 
         // scaled width and scaled height must not be zero
         assert(scaled_width * scaled_height != 0);
