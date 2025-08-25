@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 
+#if !defined(__IAR_SYSTEMS_ICC__)
 #if (__cplusplus >= 201703L || _MSVC_LANG >= 201703L)
 // Over C++17
 #include <filesystem>
@@ -13,6 +14,7 @@ namespace fs = std::filesystem;
 // In C++14 (Use ghc::filesystem)
 #include "filesystem.hpp"
 namespace fs = ghc::filesystem;
+#endif
 #endif
 
 
@@ -83,6 +85,7 @@ namespace lcv
         return img;
     } // imread
 
+#if !defined(__IAR_SYSTEMS_ICC__)
     bool imwrite(const std::string& filename, const Matrix& img, const std::vector<int>& params = std::vector<int>())
     {
         // Only write grayscale or color (3ch/4ch) image
@@ -126,6 +129,7 @@ namespace lcv
         
         return false;
     } // imwrite
+#endif
 
     Matrix imdecode(const std::vector<uchar>& buffer, int flag = IMREAD_UNCHANGED)
     {

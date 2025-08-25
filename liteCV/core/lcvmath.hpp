@@ -1,7 +1,7 @@
 #pragma once
 #ifndef LCV_CORE_LCVMATH_HPP
 #define LCV_CORE_LCVMATH_HPP
-#if (defined _MSC_VER && defined _M_X64) || (defined __GNUC__ && defined __SSE2__ && !defined __APPLE__)
+#if (defined _MSC_VER && defined _M_X64) || (defined __GNUC__ && defined __SSE2__ && !defined __IAR_SYSTEMS_ICC__)
 #include <xmmintrin.h>
 #endif
 #include <cmath>
@@ -26,7 +26,7 @@ namespace lcv
     template<typename Float>
     int inline lcvRound(Float value)
     {
-#if (defined _MSC_VER && defined _M_X64) || (defined __GNUC__ && defined __x86_64__ && defined __SSE2__ && !defined __APPLE__)
+#if (defined _MSC_VER && defined _M_X64) || (defined __GNUC__ && defined __x86_64__ && defined __SSE2__ && !defined __IAR_SYSTEMS_ICC__)
         __m128 t = _mm_set_ss( value );
         return _mm_cvtss_si32(t);
 #elif defined _MSC_VER && defined _M_IX86
@@ -49,7 +49,7 @@ namespace lcv
     template<typename Float>
     int inline lcvFloor(Float value)
     {
-#if (defined _MSC_VER && defined _M_X64) || (defined __GNUC__ && defined __SSE2__ && !defined __APPLE__)
+#if (defined _MSC_VER && defined _M_X64) || (defined __GNUC__ && defined __SSE2__ && !defined __IAR_SYSTEMS_ICC__)
         __m128 t = _mm_set_ss( value );
         int i = _mm_cvtss_si32(t);
         return i - _mm_movemask_ps(_mm_cmplt_ss(t, _mm_cvtsi32_ss(t,i)));
@@ -66,7 +66,7 @@ namespace lcv
     template<typename Float>
     int inline lcvCeil(Float value)
     {
-#if (defined _MSC_VER && defined _M_X64) || (defined __GNUC__ && defined __SSE2__&& !defined __APPLE__)
+#if (defined _MSC_VER && defined _M_X64) || (defined __GNUC__ && defined __SSE2__&& !defined __IAR_SYSTEMS_ICC__)
         __m128 t = _mm_set_ss( value );
         int i = _mm_cvtss_si32(t);
         return i + _mm_movemask_ps(_mm_cmplt_ss(_mm_cvtsi32_ss(t,i), t));
