@@ -30,7 +30,6 @@ namespace lcv
         Matrix output(scaled_height, scaled_width, src.type());
 
         // Loop height
-        LCV_OMP_LOOP_FOR
         for (int y = 0; y < output.rows; ++y)
         {
             // Loop width

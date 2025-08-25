@@ -41,32 +41,31 @@ namespace lcv
     public:
         double interpolate(const Matrix& src, int dwidth, int dheight, int dx, int dy, int ch) final
         {
-            // p is a point on src and can be mapped bacward from dst
-            // a, b, c, d are neighbors of p
-            // 
-            // a -- b
-            // |  p |
-            // c -- d
-            //
-            // alpha is a distance of between a.x and p.x on src
-            // beta is a distance of between a.y and p.y on src
+            float sx = (dx + 0.5) * src.cols / (double)dwidth - 0.5;
+            float sy = (dy + 0.5) * src.rows / (double)dheight - 0.5;
 
-            // a point on src mapped from dx, dy reversely
-            const double sx = ((double)dx / dwidth) * src.cols;
-            const double sy = ((double)dy / dheight) * src.rows;
+            int x0 = lcvFloor(sx);
+            int y0 = lcvFloor(sy);
+            int x1 = x0 + 1;
+            int y1 = y0 + 1;
 
-            const double a = (double)src.ptr<uchar>(lcvFloor(sy), lcvFloor(sx))[ch];
-            const double b = (double)src.ptr<uchar>(lcvFloor(sy), lcvCeil(sx))[ch];
-            const double c = (double)src.ptr<uchar>(lcvCeil(sy), lcvFloor(sx))[ch];
-            const double d = (double)src.ptr<uchar>(lcvCeil(sy), lcvCeil(sx))[ch];
+            x0 = lcvClamp(x0, 0, src.cols - 1);
+            y0 = lcvClamp(y0, 0, src.rows - 1);
+            x1 = lcvClamp(x1, 0, src.cols - 1);
+            y1 = lcvClamp(y1, 0, src.rows - 1);
 
-            const double alpha = calc_ratio(sx);
-            const double beta = calc_ratio(sy);
+            float alpha = sx - x0;
+            float beta  = sy - y0;
 
-            const double e = (alpha * b) + ((1 - alpha) * a);
-            const double f = (alpha * d) + ((1 - alpha) * c);
+            uchar a = src.ptr<uchar>(y0, x0)[ch];
+            uchar b = src.ptr<uchar>(y0, x1)[ch];
+            uchar c = src.ptr<uchar>(y1, x0)[ch];
+            uchar d = src.ptr<uchar>(y1, x1)[ch];
 
-            return e + (beta * (f - e));
+            return ((1 - alpha) * (1 - beta) * a) +
+                   alpha       * (1 - beta) * b +
+                   (1 - alpha) * beta       * c +
+                   alpha       * beta       * d;
         }
     }; // class LinearInterpolationPolicy
 
