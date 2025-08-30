@@ -45,7 +45,7 @@ namespace lcv
 
             __Data[0] = a0;
             for (int i = 1; i < N; ++i)
-                __Data[i] = Type();
+                __Data[i] = Type(0);
         }
 
         Element_(Type a0, Type a1)

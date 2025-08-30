@@ -307,7 +307,7 @@ namespace lcv
         MatrixType constant;
 
         constexpr ConstMatrixType()
-            : constant({ Bits, Channels, NType })
+            : constant( Bits, Channels, NType )
         {}
     }; // struct ConstMatrixType
 
@@ -622,7 +622,7 @@ namespace lcv
         void setTo(const Element& value)
         {
             // The size of value and matrix's element size must be same
-            assert(sizeof(value) == elemSize());
+            assert(sizeof(value) == elemSize1());
 
             // Set all elements to single value
             for (int i = 0; i < cols * rows; ++i)
