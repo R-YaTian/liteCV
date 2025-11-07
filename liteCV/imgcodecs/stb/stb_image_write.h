@@ -519,13 +519,10 @@ static int stbi_write_bmp_core(stbi__write_context *s, int x, int y, int comp, c
               'B', 'M', 14+40+(x*3+pad)*y, 0,0, 14+40,  // file header
                40, x,y, 1,24, 0,0,0,0,0,0);             // bitmap header
    } else {
-      // RGBA bitmaps need a v4 header
-      // use BI_BITFIELDS mode with 32bpp and alpha mask
-      // (straight BI_RGB with alpha mask doesn't work in most readers)
-      return stbiw__outfile(s,-1,-1,x,y,comp,1,(void *)data,1,0,
-         "11 4 22 4" "4 44 22 444444 4444 4 444 444 444 444",
-         'B', 'M', 14+108+x*y*4, 0, 0, 14+108, // file header
-         108, x,y, 1,32, 3,0,0,0,0,0, 0xff0000,0xff00,0xff,0xff000000u, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0); // bitmap V4 header
+      return stbiw__outfile(s,-1,-1,x,y,comp,1,(void *) data,1,0,
+         "11 4 22 4" "4 44 22 444444",
+         'B', 'M', 14+40+x*y*4, 0, 0, 14+40, // file header
+         40, x,y, 1,32, 0,0,0,0,0,0); // bitmap header
    }
 }
 

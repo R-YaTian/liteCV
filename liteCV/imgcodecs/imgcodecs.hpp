@@ -101,7 +101,7 @@ namespace lcv
 
         // Change pixel order
         if (img.channels() == 3)
-            cvtColor(img, _img, COLOR_RGB2BGR);
+            cvtColor(img, _img, COLOR_BGR2RGB);
         else if (img.channels() == 4)
             cvtColor(img, _img, COLOR_BGRA2RGBA);
         else if (img.channels() == 1)
