@@ -5716,9 +5716,9 @@ static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req
    }
 
    // if alpha channel is all 0s, replace with all 255s
-   if (target == 4 && all_a == 0)
-      for (i=4*s->img_x*s->img_y-1; i >= 0; i -= 4)
-         out[i] = 255;
+   // if (target == 4 && all_a == 0)
+   //    for (i=4*s->img_x*s->img_y-1; i >= 0; i -= 4)
+   //       out[i] = 255;
 
    if (flip_vertically) {
       stbi_uc t;
